@@ -78,11 +78,10 @@ def report_delta():
 def run(Nsize, filepath, verbose=1, small_size = True):
 
     if beta_coef == 0.0:
-        Iter = 10000
+        Iter = 1000
     else:
         Iter = 1000
 
-    Iter = 100
     
     report_delta()
 

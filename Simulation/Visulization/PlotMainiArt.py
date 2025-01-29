@@ -62,11 +62,6 @@ def plot(range,range_small, path,path_small, title, title_small, multiple = Fals
 
 def main_pic_generator():
 
-    plot(np.arange(0.0,0.42,0.07), np.arange(0,1.5,0.25), "../Data/Simulation/HPC_power_1000_model1", "../Data/Simulation/HPC_power_50_model1", "Size1000_Model1", "Size50_Model1")
-    plot(np.arange(0.0,0.96,0.16), np.arange(0.0,4.8,0.8), "../Data/Simulation/HPC_power_1000_model2", "../Data/Simulation/HPC_power_50_model2", "Size1000_Model2", "Size50_Model2")
-    plot(np.arange(0.0,0.36,0.06), np.arange(0.0,1.5,0.25), "../Data/Simulation/HPC_power_1000_model3", "../Data/Simulation/HPC_power_50_model3", "Size1000_Model3", "Size50_Model3")
-    plot(np.arange(0.0,0.36,0.06), np.arange(0.0,1.5,0.25), "../Data/Simulation/HPC_power_1000_model4", "../Data/Simulation/HPC_power_50_model4", "Size1000_Model4", "Size50_Model4")  
-    #plot(np.arange(0.2, 0.3, 0.05), np.arange(1.5, 2.5, 0.5), "../Data/Result/HPC_power_1000_Model5", "../Data/Result/HPC_power_50_Model5", "Size1000_Model5", "Size50_Model5", multiple=True)
-
+    plot(np.arange(0.0,0.42,0.07), np.arange(0,1.5,0.25), "../Data/Simulation/HPC_power_1000_survival", "../Data/Simulation/HPC_power_50_survival", "Size1000_survival", "Size50_survival")
 
 main_pic_generator()

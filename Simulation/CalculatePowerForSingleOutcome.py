@@ -75,6 +75,8 @@ def report_delta():
     print(f"Proportion Delta_ij = 0 (Censored): {proportion_censored:.2f}")
 
 
+
+
 def run(Nsize, filepath, verbose=1, small_size = True):
 
     if beta_coef == 0.0:
@@ -82,8 +84,7 @@ def run(Nsize, filepath, verbose=1, small_size = True):
     else:
         Iter = 1000
 
-    
-    report_delta()
+    #report_delta()
 
     # Simulate data
     DataGen = Generator.DataGenerator(N = Nsize, beta = beta_coef,verbose=verbose)
@@ -99,7 +100,6 @@ def run(Nsize, filepath, verbose=1, small_size = True):
     # Append p-values to corresponding lists
 
     delta_masked = np.where(M_delta == 1, np.nan, delta)
-
 
     values_median = iArt.imputation_reimputation_survival(Z=Z, X_star=X, T_star=T_masked, C_star=C_masked, S=S,delta=delta_masked,missing_mask=M_delta, G=AlwaysZeroModel(), L=Iter, verbose=verbose)
 
@@ -130,7 +130,7 @@ if __name__ == '__main__':
 
     task_id = task_id_origin
     # Model 1
-    beta_to_lambda = {0.0: 2.159275141001102, 0.07: 2.165387531267955, 0.14: 2.285935405246937, 0.21: 2.258923945496463, 0.28: 2.2980720651301794, 0.35: 2.3679216299985613}
+    """beta_to_lambda = {0.0: 2.159275141001102, 0.07: 2.165387531267955, 0.14: 2.285935405246937, 0.21: 2.258923945496463, 0.28: 2.2980720651301794, 0.35: 2.3679216299985613}
     for coef in np.arange(0.0,0.42,0.07):
         beta_coef = coef
         # Round to two decimal places to match dictionary keys
@@ -150,5 +150,18 @@ if __name__ == '__main__':
             lambda_value = beta_to_lambda[beta_coef_rounded]
             run(50, filepath = "Result/HPC_power_50_survival",small_size=True)
         else:
-            print(f"No lambda value found for beta_coef: {beta_coef_rounded}")
+            print(f"No lambda value found for beta_coef: {beta_coef_rounded}")"""
     
+    # Model 1
+    for coef in np.arange(0.0,0.24,0.04):
+        beta_coef = coef
+        beta_coef_rounded = round(beta_coef, 2)
+        run(2000, filepath = "Result/HPC_power_2000_survival", small_size=False)
+
+    for coef in np.arange(0,0.9,0.15):
+        beta_coef = coef
+        # Round to two decimal places to match dictionary keys
+        beta_coef_rounded = round(beta_coef, 2)
+        run(200, filepath = "Result/HPC_power_200_survival",small_size=True)
+
+

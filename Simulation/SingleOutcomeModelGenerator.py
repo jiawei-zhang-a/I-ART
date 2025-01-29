@@ -120,6 +120,4 @@ class DataGenerator:
         T = self.GenerateT(X, U, Z, StrataEps, Eps)
         C = self.GenerateC(X, U, T)
         M = self.GenerateM(X, U, T, C)
-        import pandas as pd
-        pd.DataFrame(T).to_csv("T.csv")
         return X, Z, T, C, M, S

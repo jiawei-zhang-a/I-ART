@@ -91,55 +91,25 @@ def my_logrank_test(Z, T, C, Delta):
 
     return results.test_statistic
 
-def preprocess_survival_data(Z, X, T, C, delta,missing_mask, G):
-    """
-    Impute missing values in delta using logistic regression (or specified classifier G).
-    Return the original T and C without modification.
-    """
-    # Concatenate continuous features
-    data_continuous = np.concatenate([Z.reshape(-1, 1), X], axis=1)  # No T and C
-    missing_mask = missing_mask.astype(bool).flatten()  # Ensure it's boolean
-
-    
-    if G is None:
-        delta_hat = delta
-    else:
-        # Impute missing delta values using the specified classifier (G)
-        X_train = data_continuous[~missing_mask.flatten(), :]  # Rows where delta is NOT missing
-        y_train = delta[~missing_mask.flatten()].ravel()  # Known delta values
-        X_test = data_continuous[missing_mask.flatten(), :]  # Rows where delta is missing
-
-        # Clone the classifier to avoid modifying original instance
-        logistic_model = clone(G)
-        logistic_model.fit(X_train, y_train)
-
-        # Predict missing delta values
-        delta_pred = logistic_model.predict(X_test)
-
-        # Fill missing values
-        delta[missing_mask] = delta_pred.reshape(-1, 1)
-        
-        delta_hat = delta.astype(int)  # Ensure binary output
-
-    return T, C, delta_hat
-
-def _preprocess_survival_data(Z, X, T, C, delta, G):
+def preprocess_survival_data(Z, X, T, C, G):
     """
     Impute missing T and C, and calculate Delta.
     """
-    data = np.concatenate([Z.reshape(-1, 1), X, T.reshape(-1, 1), C.reshape(-1, 1), delta.reshape(-1,1)], axis=1)
-
-
+    data = np.concatenate([Z.reshape(-1, 1), X, T.reshape(-1, 1), C.reshape(-1, 1)], axis=1)
     if G is None:
         imputed_data = data
     else:
         imputer = clone(G)
-        imputed_data = imputer.fit_transform(data)    
+        imputed_data = imputer.fit_transform(data)
 
-    # Extract imputed delta
-    delta_hat = imputed_data[:, -1].astype(int)
+    # Extract imputed T and C
+    T_hat = imputed_data[:, -2]
+    C_hat = imputed_data[:, -1]
 
-    return T, C, delta_hat
+    # Calculate Delta from imputed T and C
+    Delta_hat = (T_hat <= C_hat).astype(float)
+
+    return T_hat, C_hat, Delta_hat
 
 def getZsimTemplates(Z_sorted, S):
     """
@@ -168,12 +138,12 @@ def getZsim(Z_sim_templates):
     Z_sim = np.concatenate(Z_sim).reshape(-1, 1)
     return Z_sim
 
-def imputation_reimputation_survival(Z, X_star, T_star, C_star, S, delta,missing_mask, G, L=10000, randomization_design='strata', verbose=False):
+def imputation_reimputation_survival(Z, X_star, T_star, C_star, S, G, L=10000, randomization_design='strata', verbose=False):
     """
     iArt framework for survival data using the Wilcoxon-Prentice test statistic.
     """
     # Step 1: Impute missing T and C, and calculate observed test statistic
-    T_hat, C_hat, Delta_hat = preprocess_survival_data(Z, X_star, T_star, C_star, delta, missing_mask,G)
+    T_hat, C_hat, Delta_hat = preprocess_survival_data(Z, X_star, T_star, C_star, G)
     a = my_logrank_test(Z.ravel(), T_hat, C_hat, Delta_hat)#wilcoxon_prentice(Z.ravel(), T_hat, C_hat, Delta_hat)#my_logrank_test(Z.ravel(), T_hat, C_hat, Delta_hat)
 
     if verbose:
@@ -185,7 +155,7 @@ def imputation_reimputation_survival(Z, X_star, T_star, C_star, S, delta,missing
 
     for l in range(L):
         Z_sim = getZsim(Z_templates)  # Simulate Z
-        T_hat_sim, C_hat_sim, Delta_hat_sim = preprocess_survival_data(Z_sim, X_star, T_star, C_star, delta, missing_mask, G)
+        T_hat_sim, C_hat_sim, Delta_hat_sim = preprocess_survival_data(Z_sim, X_star, T_star, C_star, G)
         test_statistic = my_logrank_test(Z_sim.ravel(), T_hat_sim, C_hat_sim, Delta_hat_sim)#my_logrank_test(Z_sim.ravel(), T_hat_sim, C_hat_sim, Delta_hat_sim)
         test_statistics.append(test_statistic)
 

@@ -9,7 +9,7 @@ import os
 import lightgbm as lgb
 import xgboost as xgb
 import pandas as pd
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 import iArt as iArt
 
@@ -19,23 +19,7 @@ beta_coef = None
 task_id = 1
 
 # Set the default values
-max_iter = 1
-class AlwaysZeroModel(BaseEstimator, ClassifierMixin):
-    """
-    A scikit-learn compatible model that always outputs 0 for any input.
-    """
-
-    def fit(self, X, y=None):
-        """Does nothing, just exists for compatibility."""
-        return self
-
-    def predict(self, X):
-        """Returns an array of zeros with the same number of rows as X."""
-        return np.zeros(X.shape[0], dtype=int)
-
-    def predict_proba(self, X):
-        """Returns a probability distribution where class 0 has probability 1."""
-        return np.zeros((X.shape[0], 2))  # Always [1, 0] for (class 0, class 1)
+max_iter = 3
 
 def report_delta():
     DataGen = Generator.DataGenerator(N = 1000, beta = beta_coef)
@@ -58,23 +42,6 @@ def report_delta():
     print(f"Proportion Delta_ij = 1 (Diagnosed): {proportion_diagnosed:.2f}")
     print(f"Proportion Delta_ij = 0 (Censored): {proportion_censored:.2f}")
 
-    missing_mask = (M_delta == 1)
-    T_missing = T[missing_mask]
-    C_missing = C[missing_mask]
-
-    # Calculate Delta for missing cases
-    Delta_missing = (T_missing <= C_missing).astype(int)
-    
-    # Compute proportions
-    proportion_diagnosed = np.mean(Delta_missing == 1)  # Proportion Delta_ij = 1
-    proportion_censored = np.mean(Delta_missing == 0)   # Proportion Delta_ij = 0
-
-    # Report results
-    print("Proportions among 50% missing cases (M_delta = 1):")
-    print(f"Proportion Delta_ij = 1 (Diagnosed): {proportion_diagnosed:.2f}")
-    print(f"Proportion Delta_ij = 0 (Censored): {proportion_censored:.2f}")
-
-
 def run(Nsize, filepath, verbose=1, small_size = True):
 
     if beta_coef == 0.0:
@@ -82,34 +49,31 @@ def run(Nsize, filepath, verbose=1, small_size = True):
     else:
         Iter = 1000
 
-    Iter = 100
-    
     report_delta()
 
     # Simulate data
     DataGen = Generator.DataGenerator(N = Nsize, beta = beta_coef,verbose=verbose)
     X, Z, T, C, M_delta,S = DataGen.GenerateData()
 
-    delta = (T <= C).astype(bool)
-
-    # Mask the T and C values based on M_delta to be 10 - the final stage of the survival data
-    T_masked = np.where(M_delta == 1, 10, T)
-    C_masked = np.where(M_delta == 1, 10, C)
-
-    values_oracle= iArt.imputation_reimputation_survival(Z=Z,X_star=X,T_star = T_masked,C_star=C_masked,delta=delta,missing_mask=M_delta,  S=S, L=Iter, G = None,verbose=verbose)
+    values_oracle= iArt.imputation_reimputation_survival(Z=Z,X_star=X,T_star = T,C_star=C, S=S, L=Iter, G = None,verbose=verbose)
     # Append p-values to corresponding lists
 
-    delta_masked = np.where(M_delta == 1, np.nan, delta)
+    # Mask the T and C values based on M_delta
+    T_masked = np.where(M_delta == 1, np.nan, T)
+    C_masked = np.where(M_delta == 1, np.nan, C)
 
+    median_imputer = SimpleImputer(missing_values=np.nan, strategy='median')
+    values_median = iArt.imputation_reimputation_survival(Z=Z, X_star=X, T_star=T_masked, C_star=C_masked, S=S, G=median_imputer, L=Iter, verbose=verbose)
 
-    values_median = iArt.imputation_reimputation_survival(Z=Z, X_star=X, T_star=T_masked, C_star=C_masked, S=S,delta=delta_masked,missing_mask=M_delta, G=AlwaysZeroModel(), L=Iter, verbose=verbose)
-
-    values_LR = iArt.imputation_reimputation_survival(Z=Z, X_star=X, T_star=T_masked, C_star=C_masked, S=S, delta=delta_masked,missing_mask=M_delta, G=linear_model.LogisticRegression(), L=Iter, verbose=verbose)
+    BayesianRidge = IterativeImputer(estimator = linear_model.BayesianRidge(),max_iter=max_iter)
+    values_LR = iArt.imputation_reimputation_survival(Z=Z, X_star=X, T_star=T_masked, C_star=C_masked, S=S, G=BayesianRidge, L=Iter, verbose=verbose)
 
     if small_size == True:
-        values_xgboost = iArt.imputation_reimputation_survival(Z=Z, X_star=X, T_star=T_masked, C_star=C_masked, S=S,delta=delta_masked,missing_mask=M_delta,  G=xgb.XGBClassifier(), L=Iter, verbose=verbose)
+        xgboost_imputer = IterativeImputer(estimator = xgb.XGBRegressor(),max_iter=max_iter)
+        values_xgboost = iArt.imputation_reimputation_survival(Z=Z, X_star=X, T_star=T_masked, C_star=C_masked, S=S, G=xgboost_imputer, L=Iter, verbose=verbose)
     else:
-        values_lightgbm = iArt.imputation_reimputation_survival(Z=Z, X_star=X, T_star=T_masked, C_star=C_masked, S=S,delta=delta_masked,missing_mask=M_delta,  G=lgb.LGBMClassifier(), L=Iter, verbose=verbose)
+        lightgbm_imputer = IterativeImputer(estimator = lgb.LGBMRegressor(verbose=-1),max_iter=max_iter)
+        values_lightgbm = iArt.imputation_reimputation_survival(Z=Z, X_star=X, T_star=T_masked, C_star=C_masked, S=S, G=lightgbm_imputer, L=Iter, verbose=verbose)
 
 
     os.makedirs("%s/%f"%(filepath,beta_coef), exist_ok=True)

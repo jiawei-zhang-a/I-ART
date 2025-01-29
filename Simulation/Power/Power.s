@@ -2,7 +2,7 @@
 #
 #SBATCH --job-name=Power
 #SBATCH --nodes=1
-#SBATCH --time=19:19:00
+#SBATCH --time=00:19:00
 #SBATCH --mem=250MB
 #SBATCH --cpus-per-task=1
 #SBATCH --output=Runtime/%a.out

@@ -133,6 +133,6 @@ def plot(range,range_small, path,path_small, title, title_small, multiple = Fals
 
 def main_pic_generator():
 
-    plot(np.arange(0.0,0.42,0.07), np.arange(0,1.5,0.25), "../Power/Result/HPC_power_1000_survival", "../Power/Result/HPC_power_50_survival", "Size1000_survival", "Size50_survival")
-
+    #plot(np.arange(0.0,0.42,0.07), np.arange(0,1.5,0.25), "../Power/Result/HPC_power_1000_survival", "../Power/Result/HPC_power_50_survival", "Size1000_survival", "Size50_survival")
+    plot(np.arange(0.0,0.24,0.04), np.arange(0,0.9,0.15), "../Power/Result/HPC_power_2000_survival", "../Power/Result/HPC_power_200_survival", "Size2000_survival", "Size200_survival")
 main_pic_generator()

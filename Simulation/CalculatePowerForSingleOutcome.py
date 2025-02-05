@@ -1,8 +1,5 @@
 import sys
 import numpy as np
-from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import SimpleImputer
-from sklearn.impute import IterativeImputer
 from sklearn import linear_model
 import SingleOutcomeModelGenerator as Generator
 import os
@@ -12,7 +9,6 @@ import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin
 import numpy as np
 import iArt as iArt
-
 
 # Do not change this parameter
 beta_coef = None
@@ -75,16 +71,7 @@ def report_delta():
     print(f"Proportion Delta_ij = 0 (Censored): {proportion_censored:.2f}")
 
 
-
-
 def run(Nsize, filepath, verbose=1, small_size = True):
-
-    if beta_coef == 0.0:
-        Iter = 1000
-    else:
-        Iter = 1000
-
-    #report_delta()
 
     # Simulate data
     DataGen = Generator.DataGenerator(N = Nsize, beta = beta_coef,verbose=verbose)
@@ -129,39 +116,21 @@ if __name__ == '__main__':
         exit()
 
     task_id = task_id_origin
-    # Model 1
-    """beta_to_lambda = {0.0: 2.159275141001102, 0.07: 2.165387531267955, 0.14: 2.285935405246937, 0.21: 2.258923945496463, 0.28: 2.2980720651301794, 0.35: 2.3679216299985613}
+
     for coef in np.arange(0.0,0.42,0.07):
         beta_coef = coef
-        # Round to two decimal places to match dictionary keys
-        beta_coef_rounded = round(beta_coef, 2)
-        if beta_coef_rounded in beta_to_lambda:
-            lambda_value = beta_to_lambda[beta_coef_rounded]
-            run(1000, filepath = "Result/HPC_power_1000_survival", small_size=False)
-        else:
-            print(f"No lambda value found for beta_coef: {beta_coef_rounded}")
+        run(1000, filepath = "Result/HPC_power_1000_survival", small_size=False)
 
-    beta_to_lambda = {0.0: 2.1577587265653126, 0.25: 2.2946233479956843, 0.5: 2.42339283727788, 0.75: 2.544154767644711, 1.0: 2.669166349074493, 1.25: 2.792645016605368}
     for coef in np.arange(0,1.5,0.25):
         beta_coef = coef
-        # Round to two decimal places to match dictionary keys
-        beta_coef_rounded = round(beta_coef, 2)
-        if beta_coef_rounded in beta_to_lambda:
-            lambda_value = beta_to_lambda[beta_coef_rounded]
-            run(50, filepath = "Result/HPC_power_50_survival",small_size=True)
-        else:
-            print(f"No lambda value found for beta_coef: {beta_coef_rounded}")"""
+        run(50, filepath = "Result/HPC_power_50_survival",small_size=True)
     
-    # Model 1
     for coef in np.arange(0.0,0.24,0.04):
         beta_coef = coef
-        beta_coef_rounded = round(beta_coef, 2)
         run(2000, filepath = "Result/HPC_power_2000_survival", small_size=False)
 
     for coef in np.arange(0,0.9,0.15):
         beta_coef = coef
-        # Round to two decimal places to match dictionary keys
-        beta_coef_rounded = round(beta_coef, 2)
         run(200, filepath = "Result/HPC_power_200_survival",small_size=True)
 
 

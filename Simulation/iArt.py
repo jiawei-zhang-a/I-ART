@@ -3,63 +3,7 @@ from sklearn.impute import IterativeImputer
 from sklearn.base import clone
 from lifelines.statistics import multivariate_logrank_test
 
-
-
-def kaplan_meier_weight(t_l, distinct_times, D, N):
-    """
-    Calculate the Kaplan-Meier weight for the Prentice-Wilcoxon test.
-    """
-    weight = 1.0
-    for t_idx, t_prime in enumerate(distinct_times):
-        if t_prime >= t_l:
-            break
-        weight *= 1 - (D[t_idx] / N[t_idx])
-    return 1
-
-def wilcoxon_prentice(Z, T, C, Delta):
-    """
-    Compute the Wilcoxon-Prentice test statistic.
-    """
-    R = np.minimum(T, C)
-    distinct_times = np.sort(np.unique(R[Delta == 1]))
-
-    N_treated, N_control, N_total = [], [], []
-    D_treated, D_control, D_total = [], [], []
-
-    for t in distinct_times:
-        at_risk_treated = np.sum((Z == 1) & (R >= t))
-        at_risk_control = np.sum((Z == 0) & (R >= t))
-        at_risk_total = at_risk_treated + at_risk_control
-
-        events_treated = np.sum((Z == 1) & (R == t) & (Delta == 1))
-        events_control = np.sum((Z == 0) & (R == t) & (Delta == 1))
-        events_total = events_treated + events_control
-
-        N_treated.append(at_risk_treated)
-        N_control.append(at_risk_control)
-        N_total.append(at_risk_total)
-        D_treated.append(events_treated)
-        D_control.append(events_control)
-        D_total.append(events_total)
-
-    N_treated = np.array(N_treated)
-    N_control = np.array(N_control)
-    N_total = np.array(N_total)
-    D_treated = np.array(D_treated)
-    D_control = np.array(D_control)
-    D_total = np.array(D_total)
-
-    weights = np.array([
-        kaplan_meier_weight(t, distinct_times, D_total, N_total)
-        for t in distinct_times
-    ])
-
-    E_treated = (D_total * N_treated) / N_total
-    A_W = np.sum(weights * (D_treated - E_treated))
-
-    return A_W
-
-def my_logrank_test(Z, T, C, Delta):
+def logrank_test(Z, T, C, Delta):
     """
     Perform a log-rank test between treatment groups using multivariate_logrank_test.
 
@@ -168,13 +112,13 @@ def getZsim(Z_sim_templates):
     Z_sim = np.concatenate(Z_sim).reshape(-1, 1)
     return Z_sim
 
-def imputation_reimputation_survival(Z, X_star, T_star, C_star, S, delta,missing_mask, G, L=10000, randomization_design='strata', verbose=False):
+def iart_survival(Z, X_star, T_star, C_star, S, delta,missing_mask, G, L=10000, randomization_design='strata', verbose=False):
     """
     iArt framework for survival data using the Wilcoxon-Prentice test statistic.
     """
     # Step 1: Impute missing T and C, and calculate observed test statistic
     T_hat, C_hat, Delta_hat = preprocess_survival_data(Z, X_star, T_star, C_star, delta, missing_mask,G)
-    a = my_logrank_test(Z.ravel(), T_hat, C_hat, Delta_hat)#wilcoxon_prentice(Z.ravel(), T_hat, C_hat, Delta_hat)#my_logrank_test(Z.ravel(), T_hat, C_hat, Delta_hat)
+    a = logrank_test(Z.ravel(), T_hat, C_hat, Delta_hat)
 
     if verbose:
         print(f"Observed test statistic (a): {a}")
@@ -186,13 +130,9 @@ def imputation_reimputation_survival(Z, X_star, T_star, C_star, S, delta,missing
     for l in range(L):
         Z_sim = getZsim(Z_templates)  # Simulate Z
         T_hat_sim, C_hat_sim, Delta_hat_sim = preprocess_survival_data(Z_sim, X_star, T_star, C_star, delta, missing_mask, G)
-        test_statistic = my_logrank_test(Z_sim.ravel(), T_hat_sim, C_hat_sim, Delta_hat_sim)#my_logrank_test(Z_sim.ravel(), T_hat_sim, C_hat_sim, Delta_hat_sim)
+        test_statistic = logrank_test(Z_sim.ravel(), T_hat_sim, C_hat_sim, Delta_hat_sim)
         test_statistics.append(test_statistic)
 
-        #if verbose and l % 1000 == 0:
-            #print(f"Completed {l}/{L} iterations.")
-
-    # Step 3: Calculate p-value
     test_statistics = np.array(test_statistics)
     p_value = np.mean(test_statistics >= a)
 

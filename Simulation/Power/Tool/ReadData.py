@@ -54,7 +54,6 @@ def read_npz_files(directory,small_size=False,type="original"):
     if summed_p_values_oracle is None:
         summed_p_values_oracle = np.zeros(1)
 
-
     if small_size:
         results = {
             'median_power': summed_p_values_median[0] / N,

@@ -36,7 +36,6 @@ def plot_results(data, title, xsticks):
 
     plt.savefig("pic/" + title + ".pdf", bbox_inches='tight')
 
-
 def plot(range,range_small, path,path_small, title, title_small, multiple = False):
     Power_data = []
     Power_data_small = []
@@ -58,7 +57,6 @@ def plot(range,range_small, path,path_small, title, title_small, multiple = Fals
         Power_data_small.append(row_power_small)
     print(Power_data_small)
     plot_results(Power_data_small, title_small, range_small)
-
 
 def main_pic_generator():
     """plot2(np.arange(0.0,0.42,0.07), np.arange(0,1.5,0.25), "../Data/Result/HPC_power_1000_model1", "../Data/Result/HPC_power_50_model1", "../Data/Result/HPC_power_1000_model1", "../Data/Result/HPC_power_50_model1","Size1000_Model1", "Size50_Model1")

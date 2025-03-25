@@ -11,10 +11,10 @@ legend_lines = [
 
 # Define labels for each method
 legend_labels = [
-    'Method 1 (Non-Informative Imputation)',
-    'Method 2 (Algo 3 – Logistic)',
-    'Method 3 (Algo 3 – Boosting)',
-    'Method 4 (Oracle)'
+    'Method S1 (Non-Informative Imputation)',
+    'Method S2 (Algo 3 – Logistic)',
+    'Method S3 (Algo 3 – Boosting)',
+    'Method S4 (Oracle)'
 ]
 
 # Create a figure specifically for the legend
